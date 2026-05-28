@@ -173,17 +173,17 @@
   }
 
   #radar-wrapper {
-    flex: 1;
+    flex: 2;
     border-radius: var(--radius); overflow: hidden;
     border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow); min-height: 200px;
+    box-shadow: var(--glass-shadow); min-height: 0;
   }
   #radar-wrapper iframe { width: 100%; height: 100%; border: none; display: block; }
 
   /* ── Monthly Calendar ── */
   #month-cal {
     display: flex; flex-direction: column; gap: 10px;
-    flex: 1; min-height: 0;
+    flex: 1; min-height: 0; overflow: hidden;
   }
 
   #cal-header {
@@ -205,6 +205,7 @@
     gap: 4px;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
   }
 
   .cal-dow {
@@ -589,7 +590,7 @@ function renderHolidays() {
   const now = new Date(); now.setHours(0,0,0,0);
   const year = now.getFullYear();
   const all = [...getUSHolidays(year), ...getUSHolidays(year+1)];
-  const upcoming = all.filter(h => h.date >= now).slice(0, 8);
+  const upcoming = all.filter(h => h.date >= now).slice(0, 5);
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   container.innerHTML = upcoming.map(h => {

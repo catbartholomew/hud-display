@@ -201,7 +201,6 @@
   #cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    grid-auto-rows: 1fr;
     gap: 4px;
     flex: 1;
     min-height: 0;
@@ -553,6 +552,8 @@ function renderMonthCalendar() {
   // Fill trailing cells
   const totalCells = firstDow + daysInMonth;
   const trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  const numWeeks = Math.ceil((totalCells + trailing) / 7);
+  grid.style.gridTemplateRows = `auto repeat(${numWeeks}, 1fr)`;
   const nextMonth = month === 11 ? 1 : month + 2;
   const nextYear = month === 11 ? year + 1 : year;
   for (let d = 1; d <= trailing; d++) {

@@ -106,7 +106,7 @@
 
   #time-display {
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(2.8rem, 5.5vw, 4.8rem);
+    font-size: clamp(2rem, 4vw, 3.4rem);
     font-weight: 200;
     letter-spacing: -0.02em;
     text-shadow: 0 2px 30px rgba(0,0,0,0.5);
@@ -308,7 +308,7 @@
   <!-- Clock -->
   <div id="clock-area">
     <div id="date-display">Loading...</div>
-    <div id="time-display"><span id="hhmm">--:--</span><span class="seconds">:--</span></div>
+    <div id="time-display"><span id="hhmm">--:--</span><span class="seconds">:--</span><span id="ampm"> --</span></div>
   </div>
 
   <!-- Left column: weather + calendar -->
@@ -406,7 +406,8 @@ function updateClock() {
   h = h % 12 || 12;
   const m = String(now.getMinutes()).padStart(2,'0');
   const sec = String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('hhmm').textContent = `${h}:${m} ${ap}`;
+  document.getElementById('hhmm').textContent = `${h}:${m}`;
+  document.getElementById('ampm').textContent = ` ${ap}`;
   document.querySelector('#time-display .seconds').textContent = `:${sec}`;
 }
 updateClock();

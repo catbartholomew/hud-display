@@ -594,7 +594,7 @@ function renderHolidays() {
   const now = new Date(); now.setHours(0,0,0,0);
   const year = now.getFullYear();
   const all = [...getUSHolidays(year), ...getUSHolidays(year+1)];
-  const upcoming = all.filter(h => h.date >= now).slice(0, 5);
+  const upcoming = all.filter(h => h.date >= now).slice(0, 3);
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   container.innerHTML = upcoming.map(h => {

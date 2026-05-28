@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Sans:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --glass-bg: rgba(255,255,255,0.08);
+    --glass-border: rgba(255,255,255,0.18);
+    --glass-bg-strong: rgba(255,255,255,0.13);
+    --glass-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+    --text-primary: rgba(255,255,255,0.97);
+    --text-secondary: rgba(255,255,255,0.65);
+    --text-tertiary: rgba(255,255,255,0.4);
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
+    background: #0a0a0f;
+  }
+
+  /* Background system */
+  #bg-container {
+    position: fixed; inset: 0; z-index: 0;
+  }
+
+  .bg-slide {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 2.5s ease-in-out;
+  }
+
+  .bg-slide.active { opacity: 1; }
+
+  /* Overlay to deepen/unify the background for readability */
+  #bg-overlay {
+    position: fixed; inset: 0; z-index: 1;
+    background: linear-gradient(
+      135deg,
+      rgba(5,10,25,0.45) 0%,
+      rgba(5,10,25,0.3) 50%,
+      rgba(5,10,25,0.5) 100%
+    );
+  }
+
+  /* Layout */
+  #app {
+    position: relative; z-index: 2;
+    width: 100vw; height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "clock    clock"
+      "weather  right-col"
+      "calendar holidays";
+    gap: 18px;
+    padding: 28px;
+  }
+
+  /* Glass card base */
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(22px) saturate(1.4);
+    -webkit-backdrop-filter: blur(22px) saturate(1.4);
+    padding: 22px 26px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ── Clock ── */
+  #clock-area {
+    grid-area: clock;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  #clock-area::before { display: none; }
+
+  #date-display {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--text-primary);
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  }
+
+  #time-display {
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(2.8rem, 5.5vw, 4.8rem);
+    font-weight: 200;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    text-shadow: 0 2px 30px rgba(0,0,0,0.5);
+    line-height: 1;
+  }
+
+  #time-display .seconds {
+    font-size: 0.55em;
+    font-weight: 300;
+    opacity: 0.7;
+    vertical-align: baseline;
+  }
+
+  /* ── Weather ── */
+  #weather-area {
+    grid-area: weather;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+  }
+
+  #current-weather {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  #current-icon {
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    line-height: 1;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+  }
+
+  #current-temp {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.8rem, 5vw, 4.2rem);
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  #current-desc {
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  #current-feels {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+  }
+
+  #forecast-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .forecast-day {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    padding: 10px 6px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s;
+  }
+
+  .forecast-day:hover {
+    background: rgba(255,255,255,0.11);
+  }
+
+  .forecast-day .day-name {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  .forecast-day .day-icon { font-size: 1.3rem; line-height: 1; }
+
+  .forecast-day .day-hi {
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: var(--text-primary);
+  }
+
+  .forecast-day .day-lo {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+  }
+
+  .forecast-day .day-precip {
+    font-size: 0.68rem;
+    color: rgba(140,190,255,0.75);
+  }
+
+  /* Radar */
+  #radar-area {
+    grid-area: radar;
+    padding: 0;
+    overflow: hidden;
+    min-height: 180px;
+  }
+
+  #radar-area iframe {
+    width: 100%; height: 100%;
+    border: none;
+    border-radius: var(--radius);
+    display: block;
+  }
+
+  /* ── Right column (radar stacked) ── */
+  #right-col {
+    grid-area: right-col;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  #radar-wrapper {
+    flex: 1;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    min-height: 200px;
+  }
+
+  #radar-wrapper iframe {
+    width: 100%; height: 100%;
+    border: none;
+    display: block;
+  }
+
+  /* ── Calendar ── */
+  #calendar-area {
+    grid-area: calendar;
+  }
+
+  #calendar-loading {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  .cal-event {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .cal-event:last-child { border-bottom: none; }
+
+  .cal-time {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    min-width: 68px;
+    padding-top: 2px;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  .cal-title {
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--text-primary);
+    line-height: 1.35;
+  }
+
+  .cal-location {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+
+  .cal-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(140,190,255,0.7);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  /* ── Holidays ── */
+  #holidays-area {
+    grid-area: holidays;
+  }
+
+  .holiday-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .holiday-row:last-child { border-bottom: none; }
+
+  .holiday-name {
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: var(--text-primary);
+  }
+
+  .holiday-date {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    font-weight: 300;
+  }
+
+  .holiday-countdown {
+    font-size: 0.72rem;
+    background: rgba(255,255,255,0.09);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 2px 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  /* Error/loading states */
+  .error-text {
+    color: rgba(255,140,140,0.8);
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+
+  /* Subtle pulse for loading */
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
+  }
+  .loading { animation: pulse 1.8s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<div id="bg-container">
+  <div class="bg-slide active" id="bg0"></div>
+  <div class="bg-slide" id="bg1"></div>
+</div>
+<div id="bg-overlay"></div>
+
+<div id="app">
+
+  <!-- Clock -->
+  <div id="clock-area">
+    <div id="date-display">Loading...</div>
+    <div id="time-display"><span id="hhmm">--:--</span><span class="seconds">:--</span></div>
+  </div>
+
+  <!-- Weather -->
+  <div class="glass" id="weather-area">
+    <div class="section-label">Manhattan, KS</div>
+    <div id="current-weather">
+      <div id="current-icon" class="loading">⛅</div>
+      <div>
+        <div id="current-temp">--°</div>
+        <div id="current-desc">Loading weather...</div>
+        <div id="current-feels"></div>
+      </div>
+    </div>
+    <div id="forecast-row">
+      <div class="forecast-day loading" style="grid-column: 1/-1; text-align:center; font-size:0.8rem; color:var(--text-tertiary);">Loading forecast...</div>
+    </div>
+  </div>
+
+  <!-- Right column: radar -->
+  <div id="right-col">
+    <div id="radar-wrapper">
+      <iframe
+        src="https://embed.windy.com/embed2.html?lat=39.18&lon=-96.57&detailLat=39.18&detailLon=-96.57&width=650&height=450&zoom=7&level=surface&overlay=rain&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=mph&metricTemp=%C2%B0F&radarRange=-1"
+        title="Radar - Manhattan, KS area"
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="glass" id="calendar-area">
+    <div class="section-label">Today's Schedule</div>
+    <div id="calendar-content">
+      <div id="calendar-loading" class="loading">
+        Configure your ICS URL in the script below to see calendar events.
+      </div>
+    </div>
+  </div>
+
+  <!-- Holidays -->
+  <div class="glass" id="holidays-area">
+    <div class="section-label">Upcoming US Holidays</div>
+    <div id="holidays-content"></div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONFIGURATION - edit these values
+// ─────────────────────────────────────────────
+const CONFIG = {
+  // Paste your Outlook ICS URL here (from Outlook Settings > Calendar > Shared calendars > Publish)
+  icsUrl: 'ICS_URL_PLACEHOLDER',
+
+  // Background images rotate every N hours (default: 2)
+  bgRotateHours: 2,
+
+  // Background image URLs - add as many as you like
+  // Using high-quality landscape/nature images via Unsplash
+  backgrounds: [
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80', // mountain lake
+    'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=1920&q=80', // mountain snow
+    'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=80', // forest path
+    'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80', // starry night
+    'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1920&q=80', // wheat field
+    'https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=1920&q=80', // stormy sky
+  ],
+
+  // Lat/lon for Manhattan, KS
+  lat: 39.1836,
+  lon: -96.5717,
+};
+
+// ─────────────────────────────────────────────
+// BACKGROUND ROTATION
+// ─────────────────────────────────────────────
+(function initBackgrounds() {
+  const slides = [document.getElementById('bg0'), document.getElementById('bg1')];
+  let current = 0;
+
+  // Determine which image to show based on time-of-day slot
+  const totalImages = CONFIG.backgrounds.length;
+  const msPerSlot = CONFIG.bgRotateHours * 60 * 60 * 1000;
+  const slot = Math.floor(Date.now() / msPerSlot) % totalImages;
+
+  slides[0].style.backgroundImage = `url('${CONFIG.backgrounds[slot]}')`;
+  slides[0].classList.add('active');
+
+  function nextBackground() {
+    const next = 1 - current;
+    const nextSlot = Math.floor(Date.now() / msPerSlot) % totalImages;
+    slides[next].style.backgroundImage = `url('${CONFIG.backgrounds[nextSlot]}')`;
+    slides[next].classList.add('active');
+    slides[current].classList.remove('active');
+    current = next;
+  }
+
+  // Rotate at exact hour boundary aligned to bgRotateHours
+  function scheduleNext() {
+    const now = Date.now();
+    const nextBoundary = Math.ceil(now / msPerSlot) * msPerSlot;
+    setTimeout(() => {
+      nextBackground();
+      setInterval(nextBackground, msPerSlot);
+    }, nextBoundary - now);
+  }
+
+  scheduleNext();
+})();
+
+// ─────────────────────────────────────────────
+// CLOCK
+// ─────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  const dayName = days[now.getDay()];
+  const month = months[now.getMonth()];
+  const date = now.getDate();
+  const year = now.getFullYear();
+
+  // Ordinal suffix
+  const s = ['th','st','nd','rd'];
+  const v = date % 100;
+  const suffix = s[(v-20)%10] || s[v] || s[0];
+
+  document.getElementById('date-display').textContent =
+    `${dayName}, ${month} ${date}${suffix}, ${year}`;
+
+  let h = now.getHours();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const sec = String(now.getSeconds()).padStart(2,'0');
+
+  document.getElementById('hhmm').textContent = `${h}:${m} ${ampm}`;
+  document.querySelector('#time-display .seconds').textContent = `:${sec}`;
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+
+// ─────────────────────────────────────────────
+// WEATHER - Open-Meteo (no API key needed)
+// ─────────────────────────────────────────────
+const WMO_ICONS = {
+  0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+  45:'🌫️', 48:'🌫️',
+  51:'🌦️', 53:'🌦️', 55:'🌧️',
+  61:'🌧️', 63:'🌧️', 65:'🌧️',
+  71:'🌨️', 73:'🌨️', 75:'❄️',
+  77:'❄️',
+  80:'🌦️', 81:'🌧️', 82:'⛈️',
+  85:'🌨️', 86:'❄️',
+  95:'⛈️', 96:'⛈️', 99:'⛈️',
+};
+
+const WMO_DESC = {
+  0:'Clear sky', 1:'Mostly clear', 2:'Partly cloudy', 3:'Overcast',
+  45:'Foggy', 48:'Icy fog',
+  51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle',
+  61:'Light rain', 63:'Rain', 65:'Heavy rain',
+  71:'Light snow', 73:'Snow', 75:'Heavy snow',
+  77:'Snow grains',
+  80:'Light showers', 81:'Showers', 82:'Heavy showers',
+  85:'Snow showers', 86:'Heavy snow showers',
+  95:'Thunderstorm', 96:'Thunderstorm & hail', 99:'Severe thunderstorm',
+};
+
+const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+async function loadWeather() {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}`
+      + `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max`
+      + `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago&forecast_days=7`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    const c = data.current;
+    const d = data.daily;
+
+    // Current
+    const code = c.weather_code;
+    document.getElementById('current-icon').textContent = WMO_ICONS[code] || '🌡️';
+    document.getElementById('current-icon').classList.remove('loading');
+    document.getElementById('current-temp').textContent = `${Math.round(c.temperature_2m)}°F`;
+    document.getElementById('current-desc').textContent = WMO_DESC[code] || 'Unknown';
+    document.getElementById('current-feels').textContent =
+      `Feels like ${Math.round(c.apparent_temperature)}°  ·  Wind ${Math.round(c.wind_speed_10m)} mph`;
+
+    // Forecast
+    const forecastRow = document.getElementById('forecast-row');
+    forecastRow.innerHTML = '';
+    for (let i = 0; i < 7; i++) {
+      const dt = new Date(d.time[i] + 'T12:00:00');
+      const dayLabel = i === 0 ? 'Today' : DAYS_SHORT[dt.getDay()];
+      const precip = d.precipitation_probability_max[i];
+      const el = document.createElement('div');
+      el.className = 'forecast-day';
+      el.innerHTML = `
+        <span class="day-name">${dayLabel}</span>
+        <span class="day-icon">${WMO_ICONS[d.weather_code[i]] || '🌡️'}</span>
+        <span class="day-hi">${Math.round(d.temperature_2m_max[i])}°</span>
+        <span class="day-lo">${Math.round(d.temperature_2m_min[i])}°</span>
+        ${precip > 10 ? `<span class="day-precip">💧${precip}%</span>` : ''}
+      `;
+      forecastRow.appendChild(el);
+    }
+  } catch(e) {
+    document.getElementById('current-desc').textContent = 'Weather unavailable';
+    document.getElementById('current-desc').classList.add('error-text');
+    console.error('Weather error:', e);
+  }
+}
+
+loadWeather();
+// Refresh weather every 30 minutes
+setInterval(loadWeather, 30 * 60 * 1000);
+
+// ─────────────────────────────────────────────
+// CALENDAR - ICS parser
+// ─────────────────────────────────────────────
+async function loadCalendar() {
+  const container = document.getElementById('calendar-content');
+
+  if (!CONFIG.icsUrl) {
+    container.innerHTML = `<div style="color:var(--text-tertiary);font-size:0.82rem;font-style:italic;line-height:1.6;">
+      To show your calendar, open this file and set <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px;">CONFIG.icsUrl</code>
+      to your Outlook ICS feed URL.<br><br>
+      Find it in Outlook → Settings → Calendar → Shared calendars → Publish a calendar.
+    </div>`;
+    return;
+  }
+
+  try {
+    // Use a CORS proxy since ICS feeds don't usually allow cross-origin fetch
+    // allorigins is a simple public proxy suitable for non-sensitive public URLs
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(CONFIG.icsUrl)}`;
+    const res = await fetch(proxyUrl);
+    const json = await res.json();
+    const icsText = json.contents;
+
+    const events = parseICS(icsText);
+    const today = new Date();
+    const todayStr = formatDateStr(today);
+
+    const todayEvents = events.filter(e => {
+      if (!e.start) return false;
+      const start = e.start.substring(0, 8);
+      return start === todayStr;
+    }).sort((a, b) => a.start.localeCompare(b.start));
+
+    if (todayEvents.length === 0) {
+      container.innerHTML = `<div style="color:var(--text-tertiary);font-size:0.85rem;font-style:italic;">No events today.</div>`;
+      return;
+    }
+
+    container.innerHTML = todayEvents.map(ev => {
+      const timeLabel = formatEventTime(ev.start, ev.end, ev.allDay);
+      return `<div class="cal-event">
+        <div class="cal-dot"></div>
+        <div style="flex:1">
+          <div class="cal-title">${escHtml(ev.summary)}</div>
+          <div class="cal-time">${timeLabel}</div>
+          ${ev.location ? `<div class="cal-location">📍 ${escHtml(ev.location)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    container.innerHTML = `<div class="error-text">Calendar unavailable. Check your ICS URL or network connection.</div>`;
+    console.error('Calendar error:', e);
+  }
+}
+
+function parseICS(text) {
+  const events = [];
+  const lines = text.replace(/\r\n /g, '').replace(/\r\n/g, '\n').split('\n');
+  let current = null;
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (line === 'BEGIN:VEVENT') {
+      current = {};
+    } else if (line === 'END:VEVENT' && current) {
+      events.push(current);
+      current = null;
+    } else if (current) {
+      if (line.startsWith('SUMMARY:')) current.summary = decodeICS(line.slice(8));
+      else if (line.startsWith('LOCATION:')) current.location = decodeICS(line.slice(9));
+      else if (line.match(/^DTSTART(;[^:]+)?:/)) {
+        const val = line.split(':').slice(1).join(':');
+        current.start = val;
+        current.allDay = !val.includes('T');
+      } else if (line.match(/^DTEND(;[^:]+)?:/)) {
+        current.end = line.split(':').slice(1).join(':');
+      }
+    }
+  }
+  return events;
+}
+
+function decodeICS(s) {
+  return s.replace(/\\n/g, '\n').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
+}
+
+function formatDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}${m}${day}`;
+}
+
+function formatEventTime(start, end, allDay) {
+  if (allDay) return 'All day';
+  try {
+    const parse = s => {
+      const y = s.slice(0,4), mo = s.slice(4,6), d = s.slice(6,8);
+      const h = s.slice(9,11), mi = s.slice(11,13);
+      // ICS times in Z (UTC) - convert to local
+      if (s.endsWith('Z')) {
+        return new Date(`${y}-${mo}-${d}T${h}:${mi}:00Z`);
+      }
+      return new Date(`${y}-${mo}-${d}T${h}:${mi}:00`);
+    };
+    const s = parse(start);
+    const fmt = t => {
+      let h = t.getHours(), m = t.getMinutes();
+      const ap = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}${m ? ':'+String(m).padStart(2,'0') : ''} ${ap}`;
+    };
+    if (!end) return fmt(s);
+    return `${fmt(s)} – ${fmt(parse(end))}`;
+  } catch { return ''; }
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadCalendar();
+// Refresh calendar every 15 minutes
+setInterval(loadCalendar, 15 * 60 * 1000);
+
+// ─────────────────────────────────────────────
+// US HOLIDAYS
+// ─────────────────────────────────────────────
+function getUSHolidays(year) {
+  // Fixed-date holidays
+  const fixed = [
+    { name: "New Year's Day",       month: 1,  day: 1  },
+    { name: "Independence Day",     month: 7,  day: 4  },
+    { name: "Veterans Day",         month: 11, day: 11 },
+    { name: "Christmas Day",        month: 12, day: 25 },
+  ];
+
+  // Computed holidays
+  function nthWeekday(year, month, weekday, n) {
+    // n=1 first, n=2 second, etc. weekday: 0=Sun
+    const d = new Date(year, month-1, 1);
+    let count = 0;
+    while (true) {
+      if (d.getDay() === weekday) { count++; if (count === n) return new Date(d); }
+      d.setDate(d.getDate()+1);
+    }
+  }
+  function lastWeekday(year, month, weekday) {
+    const d = new Date(year, month, 0); // last day of month
+    while (d.getDay() !== weekday) d.setDate(d.getDate()-1);
+    return new Date(d);
+  }
+
+  const mlk     = nthWeekday(year, 1,  1, 3); // 3rd Mon Jan
+  const pres    = nthWeekday(year, 2,  1, 3); // 3rd Mon Feb
+  const memorial= lastWeekday(year, 5, 1);    // Last Mon May
+  const labor   = nthWeekday(year, 9,  1, 1); // 1st Mon Sep
+  const columbus= nthWeekday(year, 10, 1, 2); // 2nd Mon Oct
+  const thanksg = nthWeekday(year, 11, 4, 4); // 4th Thu Nov
+
+  const computed = [
+    { name: "MLK Jr. Day",        date: mlk      },
+    { name: "Presidents' Day",    date: pres     },
+    { name: "Memorial Day",       date: memorial },
+    { name: "Labor Day",          date: labor    },
+    { name: "Columbus Day",       date: columbus },
+    { name: "Thanksgiving",       date: thanksg  },
+  ];
+
+  const all = [
+    ...fixed.map(h => ({ name: h.name, date: new Date(year, h.month-1, h.day) })),
+    ...computed,
+  ];
+
+  // Add Juneteenth (June 19, established 2021)
+  all.push({ name: "Juneteenth", date: new Date(year, 5, 19) });
+
+  return all.sort((a,b) => a.date - b.date);
+}
+
+function renderHolidays() {
+  const container = document.getElementById('holidays-content');
+  const now = new Date();
+  now.setHours(0,0,0,0);
+
+  // Get holidays for this year and next
+  const thisYear = now.getFullYear();
+  const holidays = [
+    ...getUSHolidays(thisYear),
+    ...getUSHolidays(thisYear+1),
+  ];
+
+  // Show next 6 upcoming
+  const upcoming = holidays
+    .filter(h => h.date >= now)
+    .slice(0, 6);
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  container.innerHTML = upcoming.map(h => {
+    const diffDays = Math.round((h.date - now) / (1000*60*60*24));
+    const countdown = diffDays === 0 ? 'Today' :
+                      diffDays === 1 ? 'Tomorrow' :
+                      `${diffDays}d`;
+    const dateLabel = `${days[h.date.getDay()]}, ${months[h.date.getMonth()]} ${h.date.getDate()}`;
+    return `<div class="holiday-row">
+      <span class="holiday-name">${h.name}</span>
+      <span class="holiday-date">${dateLabel}</span>
+      <span class="holiday-countdown">${countdown}</span>
+    </div>`;
+  }).join('');
+}
+
+renderHolidays();
+// Refresh at midnight
+function scheduleMidnightRefresh() {
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0, 0, 5);
+  setTimeout(() => {
+    renderHolidays();
+    loadCalendar();
+    scheduleMidnightRefresh();
+  }, midnight - now);
+}
+scheduleMidnightRefresh();
+</script>
+</body>
+</html>

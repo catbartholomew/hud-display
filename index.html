@@ -97,7 +97,7 @@
   #clock-area::before { display: none; }
 
   #date-display {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: clamp(1.6rem, 3.2vw, 2.6rem);
     font-weight: 300;
     letter-spacing: 0.04em;
@@ -173,7 +173,7 @@
   }
 
   #radar-wrapper {
-    flex: none;
+    flex: 1;
     border-radius: var(--radius); overflow: hidden;
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
@@ -192,10 +192,11 @@
   }
 
   #cal-month-label {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.15rem; font-weight: 400;
-    letter-spacing: 0.06em;
-    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px; font-weight: 400;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
   }
 
   #cal-grid {
@@ -616,18 +617,6 @@ function scheduleMidnight() {
 }
 scheduleMidnight();
 
-// ── Sync radar height to weather panel ──
-function syncRadarHeight() {
-  const weather = document.getElementById('weather-area');
-  const radar = document.getElementById('radar-wrapper');
-  if (weather && radar) {
-    radar.style.height = weather.offsetHeight + 'px';
-  }
-}
-syncRadarHeight();
-window.addEventListener('resize', syncRadarHeight);
-// Re-sync after weather loads since it changes height
-setTimeout(syncRadarHeight, 2000);
 </script>
 </body>
 </html>

@@ -173,10 +173,10 @@
   }
 
   #radar-wrapper {
-    flex: 2;
+    flex: none;
     border-radius: var(--radius); overflow: hidden;
     border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow); min-height: 0;
+    box-shadow: var(--glass-shadow);
   }
   #radar-wrapper iframe { width: 100%; height: 100%; border: none; display: block; }
 
@@ -613,6 +613,19 @@ function scheduleMidnight() {
   setTimeout(() => { renderMonthCalendar(); renderHolidays(); scheduleMidnight(); }, midnight - now);
 }
 scheduleMidnight();
+
+// ── Sync radar height to weather panel ──
+function syncRadarHeight() {
+  const weather = document.getElementById('weather-area');
+  const radar = document.getElementById('radar-wrapper');
+  if (weather && radar) {
+    radar.style.height = weather.offsetHeight + 'px';
+  }
+}
+syncRadarHeight();
+window.addEventListener('resize', syncRadarHeight);
+// Re-sync after weather loads since it changes height
+setTimeout(syncRadarHeight, 2000);
 </script>
 </body>
 </html>

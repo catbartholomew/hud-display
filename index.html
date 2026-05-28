@@ -52,13 +52,18 @@
     width: 100vw; height: 100vh;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto 1fr;
     grid-template-areas:
       "clock    clock"
-      "weather  right-col"
-      "month-cal month-cal";
+      "left-col right-col";
     gap: 18px;
     padding: 28px;
+  }
+
+  #left-col {
+    grid-area: left-col;
+    display: flex; flex-direction: column; gap: 18px;
+    min-height: 0;
   }
 
   .glass {
@@ -114,7 +119,6 @@
 
   /* ── Weather ── */
   #weather-area {
-    grid-area: weather;
     display: flex; flex-direction: column; gap: 16px;
   }
 
@@ -165,6 +169,7 @@
   #right-col {
     grid-area: right-col;
     display: flex; flex-direction: column; gap: 18px;
+    min-height: 0;
   }
 
   #radar-wrapper {
@@ -177,8 +182,8 @@
 
   /* ── Monthly Calendar ── */
   #month-cal {
-    grid-area: month-cal;
     display: flex; flex-direction: column; gap: 10px;
+    flex: 1; min-height: 0;
   }
 
   #cal-header {
@@ -196,32 +201,34 @@
   #cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 1fr;
     gap: 4px;
+    flex: 1;
+    min-height: 0;
   }
 
   .cal-dow {
     text-align: center;
     font-size: 9px; font-weight: 400;
     letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--text-tertiary);
+    color: rgba(255,255,255,0.6);
     padding-bottom: 4px;
   }
 
   .cal-cell {
     position: relative;
-    aspect-ratio: 1.4;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     border-radius: 8px;
     font-size: clamp(0.7rem, 1.1vw, 0.88rem);
     font-weight: 300;
-    color: var(--text-secondary);
+    color: rgba(255,255,255,0.82);
     transition: background 0.15s;
     cursor: default;
     gap: 2px;
   }
 
-  .cal-cell.other-month { color: var(--text-tertiary); opacity: 0.45; }
+  .cal-cell.other-month { color: rgba(255,255,255,0.28); opacity: 1; }
 
   .cal-cell.today {
     background: rgba(255,255,255,0.18);
@@ -255,7 +262,30 @@
   .cal-cell.today .holiday-name { color: rgba(160,210,255,0.95); }
 
   /* weekend tint */
-  .cal-cell.weekend:not(.today) { color: rgba(255,255,255,0.45); }
+  .cal-cell.weekend:not(.today) { color: rgba(255,255,255,0.6); }
+
+  /* ── Holidays panel ── */
+
+  .holiday-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    gap: 10px;
+  }
+  .holiday-row:last-child { border-bottom: none; }
+  .holiday-name { font-size: 0.85rem; font-weight: 300; color: var(--text-primary); flex: 1; }
+  .holiday-date { font-size: 0.75rem; color: var(--text-tertiary); font-weight: 300; white-space: nowrap; }
+  .holiday-countdown {
+    font-size: 0.72rem;
+    background: rgba(255,255,255,0.09);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 2px 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
 
   @keyframes pulse {
     0%, 100% { opacity: 0.4; }
@@ -280,39 +310,46 @@
     <div id="time-display"><span id="hhmm">--:--</span><span class="seconds">:--</span></div>
   </div>
 
-  <!-- Weather -->
-  <div class="glass" id="weather-area">
-    <div class="section-label">Manhattan, KS</div>
-    <div id="current-weather">
-      <div id="current-icon" class="loading">⛅</div>
-      <div>
-        <div id="current-temp">--°</div>
-        <div id="current-desc">Loading weather...</div>
-        <div id="current-feels"></div>
+  <!-- Left column: weather + calendar -->
+  <div id="left-col">
+    <div class="glass" id="weather-area">
+      <div class="section-label">Manhattan, KS</div>
+      <div id="current-weather">
+        <div id="current-icon" class="loading">⛅</div>
+        <div>
+          <div id="current-temp">--°</div>
+          <div id="current-desc">Loading weather...</div>
+          <div id="current-feels"></div>
+        </div>
+      </div>
+      <div id="forecast-row">
+        <div class="forecast-day loading" style="grid-column:1/-1;text-align:center;font-size:0.8rem;color:var(--text-tertiary);">Loading forecast...</div>
       </div>
     </div>
-    <div id="forecast-row">
-      <div class="forecast-day loading" style="grid-column:1/-1;text-align:center;font-size:0.8rem;color:var(--text-tertiary);">Loading forecast...</div>
+
+    <!-- Monthly Calendar -->
+    <div class="glass" id="month-cal">
+      <div id="cal-header">
+        <div id="cal-month-label"></div>
+      </div>
+      <div id="cal-grid"></div>
     </div>
   </div>
 
-  <!-- Radar -->
+  <!-- Right column: radar + holidays -->
   <div id="right-col">
     <div id="radar-wrapper">
       <iframe
-        src="https://embed.windy.com/embed2.html?lat=39.18&lon=-96.57&detailLat=39.18&detailLon=-96.57&width=650&height=450&zoom=7&level=surface&overlay=rain&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=mph&metricTemp=%C2%B0F&radarRange=-1"
+        src="https://embed.windy.com/embed2.html?lat=39.18&lon=-96.57&detailLat=39.18&detailLon=-96.57&width=650&height=450&zoom=8&level=surface&overlay=rain&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=mph&metricTemp=%C2%B0F&radarRange=-1"
         title="Radar - Manhattan, KS area"
         loading="lazy"
       ></iframe>
     </div>
-  </div>
-
-  <!-- Monthly Calendar -->
-  <div class="glass" id="month-cal">
-    <div id="cal-header">
-      <div id="cal-month-label"></div>
+    <!-- Upcoming Holidays -->
+    <div class="glass" id="holidays">
+      <div class="section-label">Upcoming US Holidays</div>
+      <div id="holidays-content"></div>
     </div>
-    <div id="cal-grid"></div>
   </div>
 
 </div>
@@ -546,10 +583,33 @@ function makeCell(day, year, month, otherMonth, holidayMap) {
 renderMonthCalendar();
 
 // Re-render calendar at midnight (handles month rollover too)
+// ── Upcoming Holidays ──
+function renderHolidays() {
+  const container = document.getElementById('holidays-content');
+  const now = new Date(); now.setHours(0,0,0,0);
+  const year = now.getFullYear();
+  const all = [...getUSHolidays(year), ...getUSHolidays(year+1)];
+  const upcoming = all.filter(h => h.date >= now).slice(0, 8);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  container.innerHTML = upcoming.map(h => {
+    const diff = Math.round((h.date - now) / (1000*60*60*24));
+    const countdown = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : `${diff}d`;
+    const label = `${DAYS[h.date.getDay()]}, ${MONTHS[h.date.getMonth()]} ${h.date.getDate()}`;
+    return `<div class="holiday-row">
+      <span class="holiday-name">${h.name}</span>
+      <span class="holiday-date">${label}</span>
+      <span class="holiday-countdown">${countdown}</span>
+    </div>`;
+  }).join('');
+}
+
+renderHolidays();
+
 function scheduleMidnight() {
   const now = new Date();
   const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0, 0, 5);
-  setTimeout(() => { renderMonthCalendar(); scheduleMidnight(); }, midnight - now);
+  setTimeout(() => { renderMonthCalendar(); renderHolidays(); scheduleMidnight(); }, midnight - now);
 }
 scheduleMidnight();
 </script>

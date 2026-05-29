@@ -372,34 +372,45 @@
 
 <script>
 const CONFIG = {
+  unsplashKey: 'UNSPLASH_KEY_PLACEHOLDER',
+  unsplashQuery: 'nature,plants',
   bgRotateHours: 2,
-  backgrounds: [
-    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
-    'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=1920&q=80',
-    'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=80',
-    'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80',
-    'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1920&q=80',
-    'https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=1920&q=80',
-  ],
   lat: 39.1836,
   lon: -96.5717,
 };
 
 // ── Backgrounds ──
-(function() {
+async function fetchUnsplashPhoto() {
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(CONFIG.unsplashQuery)}&orientation=landscape&client_id=${CONFIG.unsplashKey}`
+    );
+    const data = await res.json();
+    return data.urls.full + '&w=1920&q=80';
+  } catch(e) {
+    console.error('Unsplash fetch failed:', e);
+    return null;
+  }
+}
+
+(async function() {
   const slides = [document.getElementById('bg0'), document.getElementById('bg1')];
   let current = 0;
   const msPerSlot = CONFIG.bgRotateHours * 60 * 60 * 1000;
-  const slot = Math.floor(Date.now() / msPerSlot) % CONFIG.backgrounds.length;
-  slides[0].style.backgroundImage = `url('${CONFIG.backgrounds[slot]}')`;
 
-  function next() {
+  // Load first image
+  const firstUrl = await fetchUnsplashPhoto();
+  if (firstUrl) slides[0].style.backgroundImage = `url('${firstUrl}')`;
+
+  async function next() {
     const n = 1 - current;
-    const s = Math.floor(Date.now() / msPerSlot) % CONFIG.backgrounds.length;
-    slides[n].style.backgroundImage = `url('${CONFIG.backgrounds[s]}')`;
-    slides[n].classList.add('active');
-    slides[current].classList.remove('active');
-    current = n;
+    const url = await fetchUnsplashPhoto();
+    if (url) {
+      slides[n].style.backgroundImage = `url('${url}')`;
+      slides[n].classList.add('active');
+      slides[current].classList.remove('active');
+      current = n;
+    }
   }
 
   const nextBoundary = Math.ceil(Date.now() / msPerSlot) * msPerSlot;

@@ -25,9 +25,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject ICS URL
+      - name: Inject secrets
         run: |
           sed -i "s|ICS_URL_PLACEHOLDER|${{ secrets.ICS_URL }}|g" index.html
+          sed -i "s|UNSPLASH_KEY_PLACEHOLDER|${{ secrets.UNSPLASH_KEY }}|g" index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
